@@ -16,6 +16,14 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 	// 主页
 	links.push(LinkPresets.Home);
 
+	// AI 互动（子域入口）
+	links.push({
+		name: "AI互动",
+		url: "https://chat.7651130.xyz",
+		icon: "material-symbols:smart-toy",
+		external: true,
+	});
+
 	// 文章及其子菜单
 	links.push({
 		name: "文章",

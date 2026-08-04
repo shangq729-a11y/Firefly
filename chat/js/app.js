@@ -196,16 +196,14 @@ function bubbleHTML(role, text, withCursor, thinkText) {
   const avatar = role === "user"
     ? '<div class="avatar">🧑‍💻</div>'
     : '<img class="avatar ai-avatar" src="assets/ai-avatar.png" alt="AI">';
-  // 传了 thinkText 参数（即使为空串）就生成心声折叠区；历史消息没有心声则不传
+  // 传了 thinkText 参数（即使为空串）就生成心声折叠区，放在气泡下方；历史消息没有心声则不传
   const think = thinkText !== undefined
     ? `<details class="think-fold"><summary>💭 心声</summary><div class="think-body"></div></details>`
     : "";
   return `<div class="msg msg-${role}">
     ${avatar}
-    <div class="bubble${withCursor ? " cursor" : ""}">
-      ${think}
-      <div class="reply-body">${esc(text) || "…"}</div>
-    </div>
+    <div class="bubble${withCursor ? " cursor" : ""}"><div class="reply-body">${esc(text) || "…"}</div></div>
+    ${think}
   </div>`;
 }
 function renderMessages() {
@@ -314,12 +312,26 @@ async function sendMessage(text) {
   let phase = "think";                 // 当前接收阶段：先思考后正文
   let typeQ = [];                      // 待渲染字符队列
   let typeTimer = null;
+  let streamDone = false;              // SSE 流是否已结束
+  let finished = false;                // 收尾是否已完成
   const enqueue = (s) => { for (const ch of s) typeQ.push({ ch, ph: phase }); };
+  const finishType = () => {           // 队列渲染完后的收尾（数据已落地，只做 DOM 收尾）
+    if (finished) return;
+    finished = true;
+    clearInterval(typeTimer);
+    if (!thinkFull) { const fold = bubble.querySelector(".think-fold"); if (fold) fold.remove(); }
+    bubble.classList.remove("cursor");
+    flashStatus("收到啦喵~");
+  };
   const pump = () => {
-    if (!typeQ.length) return;
-    const it = typeQ.shift();
-    (it.ph === "think" ? thinkBody : replyBody).textContent += it.ch;
-    scrollBottom();
+    if (finished) return;
+    if (typeQ.length) {
+      const it = typeQ.shift();
+      (it.ph === "think" ? thinkBody : replyBody).textContent += it.ch;
+      scrollBottom();
+    } else if (streamDone) {
+      finishType();
+    }
   };
   typeTimer = setInterval(pump, 30);   // 30ms 一个字符
   try {
@@ -369,18 +381,13 @@ async function sendMessage(text) {
 
     if (!full && !thinkFull) throw new Error("AI 没有返回内容，请检查 functions/api/chat.js 的配置");
 
-    // 等打字机队列渲染完再收尾
-    clearInterval(typeTimer);
-    await new Promise((res) => {
-      const flush = setInterval(() => { if (!typeQ.length) { clearInterval(flush); res(); } }, 30);
-    });
-    if (!thinkFull) { const fold = bubble.querySelector(".think-fold"); if (fold) fold.remove(); }
-    bubble.classList.remove("cursor");
+    // 数据立刻落地，防止打字机渲染期间用户发新消息导致重绘丢消息
     s.messages.push({ role: "assistant", content: full, thinking: thinkFull || undefined });
     s.updatedAt = nowStamp();
     saveSessions();
     renderSessionList();
-    flashStatus("收到啦喵~");
+    // 流已结束，等打字机把队列渲染完由 pump 自动收尾 DOM
+    streamDone = true;
   } catch (err) {
     if (typeTimer) clearInterval(typeTimer);
     if (bubble) bubble.classList.remove("cursor");

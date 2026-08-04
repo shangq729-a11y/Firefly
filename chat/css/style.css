@@ -291,7 +291,7 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
 .messages::-webkit-scrollbar { width: 6px; }
 .messages::-webkit-scrollbar-thumb { background: rgba(255,143,179,0.35); border-radius: 6px; }
 
-.msg { display: flex; gap: 10px; align-items: flex-start; animation: msgIn 0.35s ease both; }
+.msg { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; animation: msgIn 0.35s ease both; }
 @keyframes msgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 .msg-user { flex-direction: row-reverse; }
@@ -334,20 +334,23 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
   box-shadow: 0 6px 16px rgba(109,124,242,0.4);
 }
 
-/* ---------- 心声折叠区 ---------- */
+/* ---------- 心声折叠区（气泡下方，与气泡并行） ---------- */
 .reply-body { white-space: pre-wrap; word-break: break-word; }
-.think-fold {
-  margin: -4px -6px 8px;
-  padding: 8px 11px;
-  background: rgba(255, 255, 255, 0.32);
+.msg-assistant .think-fold {
+  flex-basis: 100%;            /* 独占一行，排在气泡下方 */
+  margin-left: 52px;           /* 42px 头像 + 10px 间距，对齐气泡左缘 */
+  margin-top: 2px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 10px;
-  border-left: 3px solid rgba(255, 255, 255, 0.65);
+  border-left: 3px solid rgba(255, 255, 255, 0.45);
+  max-width: calc(100% - 62px);
 }
 .think-fold summary {
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(40, 20, 60, 0.55);
+  color: rgba(74, 42, 107, 0.5);
   user-select: none;
   list-style: none;
   display: flex;
@@ -358,12 +361,12 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
 .think-fold summary::before { content: "▸"; transition: transform 0.2s; font-size: 11px; }
 .think-fold[open] summary::before { transform: rotate(90deg); }
 .think-body {
-  margin-top: 7px;
-  padding-top: 7px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.6);
-  font-size: 13.5px;
-  line-height: 1.65;
-  color: rgba(45, 25, 65, 0.6);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(74, 42, 107, 0.55);
   font-style: italic;
   white-space: pre-wrap;
   word-break: break-word;

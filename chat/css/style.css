@@ -20,13 +20,12 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body { height: 100%; }
+html, body { height: 100%; overflow: hidden; /* 禁止页面滚动：防止键盘弹出时输入框被顶出视野 */ }
 
 body {
   font-family: var(--font);
   color: var(--ink);
   background: #1a1626; /* 兜底深色背景 */
-  overflow: hidden;
 }
 
 /* ---------- 全屏壁纸（默认渐变） ---------- */

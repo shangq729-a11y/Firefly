@@ -578,57 +578,61 @@ document.addEventListener("click", (e) => {
   }
 });
 
-/* ---------- 移动端视口修正（兼容 VIVO 等老内核浏览器） ---------- */
+/* ---------- 移动端视口修正（修复：键盘弹出后输入框被顶到屏幕上方） ---------- */
 (function fixMobileViewport() {
+  const rootStyle = document.documentElement.style;
+
   // 1. 用 JS 实时测量可视高度，覆盖到 --app-h 变量
   const setAppHeight = () => {
     const h = window.innerHeight || document.documentElement.clientHeight || 800;
-    document.documentElement.style.setProperty("--app-h", h + "px");
+    rootStyle.setProperty("--app-h", h + "px");
   };
   setAppHeight();
   window.addEventListener("resize", setAppHeight);
   window.addEventListener("orientationchange", () => setTimeout(setAppHeight, 300));
 
-  // 2. visualViewport：软键盘弹出时页面跟着压缩，输入框不被顶出视野
+  // 2. visualViewport：软键盘弹出时页面跟着压缩，输入栏贴住键盘
+  const setVpHeight = () => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const vh = vv.height;
+    if (vh && vh < (window.innerHeight || 900) - 40) {
+      rootStyle.setProperty("--app-h", vh + "px");
+    } else {
+      setAppHeight();
+    }
+  };
   if (window.visualViewport) {
-    const syncVp = () => {
-      const vh = window.visualViewport.height;
-      if (vh && vh < (window.innerHeight || 900) - 40) {
-        document.documentElement.style.setProperty("--app-h", vh + "px");
-      } else {
-        setAppHeight();
-      }
-    };
-    window.visualViewport.addEventListener("resize", syncVp);
-    window.visualViewport.addEventListener("scroll", syncVp);
+    window.visualViewport.addEventListener("resize", setVpHeight);
+    window.visualViewport.addEventListener("scroll", setVpHeight);
   }
 
-  // 3. 输入框聚焦/失焦兜底：vivo 等老内核键盘弹出时事件不触发，
-  //    用轮询 + 强制滚动保证输入栏和最近消息可见
+  // 3. 输入框聚焦/失焦兜底：老内核键盘弹出事件不触发，用轮询修正。
+  //    注意：绝不能用 scrollIntoView 或让页面产生滚动，否则输入框会被
+  //    浏览器顶到屏幕上方看不到聊天区。这里只做两件事：
+  //    ① 实时把 --app-h 压成键盘上方可视高度；
+  //    ② 强制把页面滚回顶部，抵消浏览器聚焦时的自动滚动。
   const input = document.getElementById("userInput");
   const messages = document.getElementById("messages");
-  let watchTimer = null, lastH = 0;
+  let watchTimer = null;
   const refresh = () => {
-    const vh = window.visualViewport ? window.visualViewport.height : 0;
-    const h = vh || window.innerHeight || 0;
-    if (!h) return;
-    if (h !== lastH) {
-      lastH = h;
-      rootStyle.setProperty("--app-h", h + "px");
-      try { input.scrollIntoView({ block: "nearest" }); } catch (e) {}
-      if (messages) messages.scrollTop = messages.scrollHeight;
-    }
+    setVpHeight();
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (messages) messages.scrollTop = messages.scrollHeight;
   };
   if (input) {
     input.addEventListener("focus", () => {
-      lastH = 0;                                  // 强制首轮更新
+      setTimeout(refresh, 100);
       setTimeout(refresh, 350);                   // 键盘动画后
       setTimeout(refresh, 900);                   // 双保险
-      watchTimer = setInterval(refresh, 600);     // 老内核兜底轮询
+      watchTimer = setInterval(refresh, 500);     // 老内核兜底轮询
     });
     input.addEventListener("blur", () => {
       if (watchTimer) { clearInterval(watchTimer); watchTimer = null; }
       setAppHeight();
+      window.scrollTo(0, 0);
     });
   }
 })();

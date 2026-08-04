@@ -202,7 +202,7 @@ function bubbleHTML(role, text, withCursor, thinkText) {
     : "";
   return `<div class="msg msg-${role}">
     ${avatar}
-    <div class="bubble${withCursor ? " cursor" : ""}"><div class="reply-body">${esc(text) || "…"}</div></div>
+    <div class="bubble${withCursor ? " cursor" : ""}"><div class="reply-body">${esc(text) || ""}</div></div>
     ${think}
   </div>`;
 }
@@ -296,10 +296,20 @@ async function sendMessage(text) {
   scrollBottom();
 
   const aiEl = document.createElement("div");
-  aiEl.innerHTML = bubbleHTML("assistant", "", true, "");
+  aiEl.innerHTML = bubbleHTML("assistant", "", true);
   const bubble = aiEl.querySelector(".bubble");
-  const thinkBody = aiEl.querySelector(".think-body");
   const replyBody = aiEl.querySelector(".reply-body");
+  let foldEl = null, thinkBody = null;   // 心声折叠区：收到思考内容时才创建
+  const ensureFold = () => {
+    if (foldEl) return;
+    const w = document.createElement("details");
+    w.className = "think-fold";
+    w.innerHTML = '<summary>💭 心声</summary><div class="think-body"></div>';
+    bubble.parentNode.appendChild(w);    // 追加到 msg 容器末尾 = 气泡下方
+    foldEl = w;
+    thinkBody = w.querySelector(".think-body");
+    scrollBottom();
+  };
   msgBox.appendChild(aiEl.firstElementChild);
   scrollBottom();
 
@@ -319,7 +329,6 @@ async function sendMessage(text) {
     if (finished) return;
     finished = true;
     clearInterval(typeTimer);
-    if (!thinkFull) { const fold = bubble.querySelector(".think-fold"); if (fold) fold.remove(); }
     bubble.classList.remove("cursor");
     flashStatus("收到啦喵~");
   };
@@ -373,7 +382,7 @@ async function sendMessage(text) {
           const delta = json.choices?.[0]?.delta || {};
           const rc = delta.reasoning_content || delta.thinking || delta.reasoning || "";
           const cc = typeof delta.content === "string" ? delta.content : "";
-          if (rc) { thinkFull += rc; enqueue(rc); }
+          if (rc) { ensureFold(); thinkFull += rc; enqueue(rc); }
           if (cc) { phase = "reply"; full += cc; enqueue(cc); }
         } catch { /* 忽略无法解析的片段 */ }
       }

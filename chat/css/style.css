@@ -310,6 +310,7 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
 .msg-user .avatar { background: linear-gradient(135deg, #cdd8ff, #9fb4f5); }
 
 .bubble {
+  width: fit-content;
   max-width: min(74%, 660px);
   padding: 12px 17px;
   border-radius: 18px;

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>来聊天吧~ 二次元AI互动小屋</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css?v=4">
+</head>
+<body>
+
+  <!-- ===== 全屏壁纸层（默认渐变） ===== -->
+  <div class="bg-wall" id="bgWall"></div>
+  <div class="bg-veil"></div>
+
+  <!-- ===== 动态樱花粒子层 ===== -->
+  <canvas id="petalCanvas"></canvas>
+
+  <!-- ===== 侧边栏展开触发区（鼠标移到左边缘自动展开） ===== -->
+  <div class="edge-zone" id="edgeZone"></div>
+
+  <!-- ===== 主布局 ===== -->
+  <div class="app">
+
+    <!-- 左侧毛玻璃侧边栏（可自动收缩） -->
+    <aside class="sidebar glass" id="sidebar">
+
+      <div class="logo">
+        <img class="logo-cat" src="assets/ai-avatar.png" alt="logo">
+        <div>
+          <h1>来聊天吧~</h1>
+          <p class="logo-sub">二次元 AI 互动小屋</p>
+        </div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-head">
+          <span>会话历史</span>
+          <button class="mini-btn" id="newChatBtn" title="新建对话">＋ 新建</button>
+        </div>
+        <ul class="session-list" id="sessionList"></ul>
+      </div>
+
+      <!-- ===== 音乐播放器（侧边栏内嵌卡片式） ===== -->
+      <div class="player glass" id="player">
+        <div class="p-cover" id="pCover">🎵</div>
+        <div class="p-main">
+          <div class="p-title" id="trackName">未选择曲目</div>
+          <div class="p-progress" id="pProgress"><div class="p-bar" id="pBar"></div></div>
+          <div class="p-controls">
+            <button class="p-btn" id="btnPrev" title="上一首">⏮</button>
+            <button class="p-btn p-play" id="btnPlay" title="播放/暂停">▶</button>
+            <button class="p-btn" id="btnNext" title="下一首">⏭</button>
+            <span class="p-time" id="pTime">00:00 / 00:00</span>
+          </div>
+          <div class="p-volume">
+            <span class="vol-ico" id="volIco" title="音量">🔊</span>
+            <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80">
+          </div>
+        </div>
+      </div>
+
+      <div class="side-block">
+        <details open>
+          <summary>陪伴信息</summary>
+          <label class="field">
+            <span>她的身份</span>
+            <input id="setCos" placeholder="例如：可爱小猫娘">
+          </label>
+          <label class="field">
+            <span>她的名字</span>
+            <input id="setName" placeholder="例如：汐汐">
+          </label>
+          <label class="field">
+            <span>她的性格</span>
+            <textarea id="setPersonality" rows="3" placeholder="例如：温柔，耐心指导"></textarea>
+          </label>
+          <button class="mini-btn full" id="applySettingsBtn">应用设置</button>
+        </details>
+      </div>
+
+      <div class="side-foot">
+        <button class="mini-btn" id="musicBtn">🎵 播放音乐</button>
+        <p class="hint">素材替换：assets 目录<br>部署：见 README.md</p>
+      </div>
+    </aside>
+
+    <!-- 右侧聊天区 -->
+    <main class="chat">
+      <header class="chat-header glass">
+        <button class="hamburger" id="menuBtn" title="菜单">☰</button>
+        <div>
+          <h2 id="chatTitle">和 <span id="aiNameDisplay">汐汐</span> 聊天中</h2>
+          <p class="chat-sub" id="chatSub">正在等你开口喵~</p>
+        </div>
+        <span class="status"><i class="dot"></i>在线</span>
+      </header>
+
+      <div class="messages" id="messages">
+        <div class="msg msg-ai">
+          <img class="avatar ai-avatar" src="assets/ai-avatar.png" alt="AI">
+          <div class="bubble">你好呀~ 我是你的 AI 陪伴，有什么想聊的都可以告诉我喵~</div>
+        </div>
+      </div>
+
+      <form class="input-bar glass" id="inputForm">
+        <input id="userInput" placeholder="聊点什么吧……" autocomplete="off" maxlength="2000">
+        <button type="submit" id="sendBtn">发送</button>
+      </form>
+    </main>
+
+  </div>
+
+<script src="js/app.js?v=4"></script>
+</body>
+</html>

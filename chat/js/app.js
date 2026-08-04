@@ -490,17 +490,21 @@ function initPlayer() {
   });
 }
 
+function showPlayHint(show) {
+  const el = $("pHint");
+  if (el) el.hidden = !show;
+}
 function playTrack(i) {
   trackIdx = i;
   audio.src = CONFIG.musicList[i];
   const name = CONFIG.musicList[i].split("/").pop().replace(/\.[^.]+$/, "");
   $("trackName").textContent = `${name} · ${i + 1}/${CONFIG.musicList.length}`;
   $("pCover").classList.add("spin");
-  audio.play().catch(() => {
-    $("trackName").textContent = "点击播放被浏览器拦截，再点一次";
-  });
+  const p = audio.play();
+  if (p) p.catch(() => showPlayHint(true));
+  else showPlayHint(true);
   $("btnPlay").textContent = "⏸";
-  audio.onplaying = () => { $("btnPlay").textContent = "⏸"; };
+  audio.onplaying = () => { $("btnPlay").textContent = "⏸"; showPlayHint(false); };
   audio.onpause = () => { $("btnPlay").textContent = "▶"; };
 }
 function togglePlay() {
@@ -599,12 +603,33 @@ document.addEventListener("click", (e) => {
     window.visualViewport.addEventListener("scroll", syncVp);
   }
 
-  // 3. 输入框聚焦时确保滚进可视区
+  // 3. 输入框聚焦/失焦兜底：vivo 等老内核键盘弹出时事件不触发，
+  //    用轮询 + 强制滚动保证输入栏和最近消息可见
   const input = document.getElementById("userInput");
-  if (input) {
-    input.addEventListener("focus", () => setTimeout(() => {
+  const messages = document.getElementById("messages");
+  let watchTimer = null, lastH = 0;
+  const refresh = () => {
+    const vh = window.visualViewport ? window.visualViewport.height : 0;
+    const h = vh || window.innerHeight || 0;
+    if (!h) return;
+    if (h !== lastH) {
+      lastH = h;
+      rootStyle.setProperty("--app-h", h + "px");
       try { input.scrollIntoView({ block: "nearest" }); } catch (e) {}
-    }, 350));
+      if (messages) messages.scrollTop = messages.scrollHeight;
+    }
+  };
+  if (input) {
+    input.addEventListener("focus", () => {
+      lastH = 0;                                  // 强制首轮更新
+      setTimeout(refresh, 350);                   // 键盘动画后
+      setTimeout(refresh, 900);                   // 双保险
+      watchTimer = setInterval(refresh, 600);     // 老内核兜底轮询
+    });
+    input.addEventListener("blur", () => {
+      if (watchTimer) { clearInterval(watchTimer); watchTimer = null; }
+      setAppHeight();
+    });
   }
 })();
 

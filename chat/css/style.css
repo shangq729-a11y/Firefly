@@ -57,6 +57,18 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* ---------- 播放器拦截提示 ---------- */
+.p-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(74, 42, 107, 0.65);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 5px 9px;
+}
+.p-hint[hidden] { display: none; }
+
 /* ---------- 主布局 ---------- */
 .app {
   display: flex;

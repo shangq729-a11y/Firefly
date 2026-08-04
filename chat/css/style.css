@@ -333,6 +333,41 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
   border-bottom-right-radius: 6px;
   box-shadow: 0 6px 16px rgba(109,124,242,0.4);
 }
+
+/* ---------- 心声折叠区 ---------- */
+.reply-body { white-space: pre-wrap; word-break: break-word; }
+.think-fold {
+  margin: -4px -6px 8px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 10px;
+  border-left: 3px solid rgba(255, 255, 255, 0.65);
+}
+.think-fold summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(40, 20, 60, 0.55);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.5px;
+}
+.think-fold summary::before { content: "▸"; transition: transform 0.2s; font-size: 11px; }
+.think-fold[open] summary::before { transform: rotate(90deg); }
+.think-body {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.6);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: rgba(45, 25, 65, 0.6);
+  font-style: italic;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .bubble.cursor::after {
   content: "▌";
   color: var(--pink-deep);

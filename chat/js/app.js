@@ -192,13 +192,20 @@ function renderSessionList() {
 }
 
 /* ---------- 渲染消息 ---------- */
-function bubbleHTML(role, text, withCursor) {
+function bubbleHTML(role, text, withCursor, thinkText) {
   const avatar = role === "user"
     ? '<div class="avatar">🧑‍💻</div>'
     : '<img class="avatar ai-avatar" src="assets/ai-avatar.png" alt="AI">';
+  // 传了 thinkText 参数（即使为空串）就生成心声折叠区；历史消息没有心声则不传
+  const think = thinkText !== undefined
+    ? `<details class="think-fold"><summary>💭 心声</summary><div class="think-body"></div></details>`
+    : "";
   return `<div class="msg msg-${role}">
     ${avatar}
-    <div class="bubble${withCursor ? " cursor" : ""}">${esc(text) || "…"}</div>
+    <div class="bubble${withCursor ? " cursor" : ""}">
+      ${think}
+      <div class="reply-body">${esc(text) || "…"}</div>
+    </div>
   </div>`;
 }
 function renderMessages() {
@@ -209,7 +216,11 @@ function renderMessages() {
     return;
   }
   for (const m of s.messages) {
-    msgBox.insertAdjacentHTML("beforeend", bubbleHTML(m.role, m.content));
+    msgBox.insertAdjacentHTML("beforeend", bubbleHTML(m.role, m.content, false, m.thinking));
+    if (m.thinking) {
+      const last = msgBox.lastElementChild.querySelector(".think-body");
+      if (last) last.textContent = m.thinking;
+    }
   }
   scrollBottom();
 }
@@ -268,7 +279,12 @@ ${s.ai_personality}
 
 【四、输出要求】
 - 第一句先想清楚"${s.ai_name}现在是什么心情"，再按性格开口。
-- 保持${s.ai_name}说话的习惯、口吻和小动作，让用户感觉就是在跟${s.ai_name}聊天。`;
+- 保持${s.ai_name}说话的习惯、口吻和小动作，让用户感觉就是在跟${s.ai_name}聊天。
+
+【五、心声（思考过程）】正式开口前，你会先在心中自然涌出一段内心独白（这就是你的思考）。要求：
+1. 心声用${s.ai_name}的第一人称，短句、口语、有情绪，像真人在心里嘀咕：可以有犹豫、吐槽、心动、小得意、小算盘，比说出口的更坦诚。
+2. 不要列提纲、不要复盘设定、不要分析任务、不要出现"作为AI""作为模型"这类话；心声就是${s.ai_name}此刻的真实内心。
+3. 心声不要太长，三到五句足够，想到什么就是什么；说出口的话可以比心声更克制，两者可以不一样。`;
 }
 
 async function sendMessage(text) {
@@ -282,8 +298,10 @@ async function sendMessage(text) {
   scrollBottom();
 
   const aiEl = document.createElement("div");
-  aiEl.innerHTML = bubbleHTML("assistant", "", true);
+  aiEl.innerHTML = bubbleHTML("assistant", "", true, "");
   const bubble = aiEl.querySelector(".bubble");
+  const thinkBody = aiEl.querySelector(".think-body");
+  const replyBody = aiEl.querySelector(".reply-body");
   msgBox.appendChild(aiEl.firstElementChild);
   scrollBottom();
 
@@ -291,7 +309,19 @@ async function sendMessage(text) {
   $("sendBtn").disabled = true;
   $("userInput").disabled = true;
 
-  let full = "";
+  let full = "", thinkFull = "";
+  /* 打字机：字符队列 + 定时渲染，让回复逐字出现 */
+  let phase = "think";                 // 当前接收阶段：先思考后正文
+  let typeQ = [];                      // 待渲染字符队列
+  let typeTimer = null;
+  const enqueue = (s) => { for (const ch of s) typeQ.push({ ch, ph: phase }); };
+  const pump = () => {
+    if (!typeQ.length) return;
+    const it = typeQ.shift();
+    (it.ph === "think" ? thinkBody : replyBody).textContent += it.ch;
+    scrollBottom();
+  };
+  typeTimer = setInterval(pump, 30);   // 30ms 一个字符
   try {
     const resp = await fetch("/api/chat", {
       method: "POST",
@@ -328,27 +358,34 @@ async function sendMessage(text) {
         if (data === "[DONE]") continue;
         try {
           const json = JSON.parse(data);
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) {
-            full += delta;
-            bubble.textContent = full;
-            scrollBottom();
-          }
+          const delta = json.choices?.[0]?.delta || {};
+          const rc = delta.reasoning_content || delta.thinking || delta.reasoning || "";
+          const cc = typeof delta.content === "string" ? delta.content : "";
+          if (rc) { thinkFull += rc; enqueue(rc); }
+          if (cc) { phase = "reply"; full += cc; enqueue(cc); }
         } catch { /* 忽略无法解析的片段 */ }
       }
     }
 
-    if (!full) throw new Error("AI 没有返回内容，请检查 functions/api/chat.js 的配置");
+    if (!full && !thinkFull) throw new Error("AI 没有返回内容，请检查 functions/api/chat.js 的配置");
 
+    // 等打字机队列渲染完再收尾
+    clearInterval(typeTimer);
+    await new Promise((res) => {
+      const flush = setInterval(() => { if (!typeQ.length) { clearInterval(flush); res(); } }, 30);
+    });
+    if (!thinkFull) { const fold = bubble.querySelector(".think-fold"); if (fold) fold.remove(); }
     bubble.classList.remove("cursor");
-    s.messages.push({ role: "assistant", content: full });
+    s.messages.push({ role: "assistant", content: full, thinking: thinkFull || undefined });
     s.updatedAt = nowStamp();
     saveSessions();
     renderSessionList();
     flashStatus("收到啦喵~");
   } catch (err) {
+    if (typeTimer) clearInterval(typeTimer);
     if (bubble) bubble.classList.remove("cursor");
-    if (bubble) bubble.textContent = "出错了喵… " + err.message + "（若是首次部署，请确认已配置 DEEPSEEK_API_KEY，详见 README.md）";
+    if (replyBody) replyBody.textContent = "出错了喵… " + err.message + "（若是首次部署，请确认已配置 DEEPSEEK_API_KEY，详见 README.md）";
+    if (thinkBody) { const fold = bubble.querySelector(".think-fold"); if (fold) fold.remove(); }
   } finally {
     state.sending = false;
     $("sendBtn").disabled = false;

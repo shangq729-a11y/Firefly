@@ -43,8 +43,9 @@ export async function onRequestPost(context) {
       model: body.model || "deepseek-v4-flash",
       messages,
       stream: true,
-      // 若你的模型/接口不支持 thinking 参数，把下面这行注释掉即可
-      thinking: { type: "disabled" },
+      // 思考功能：模型的思考过程会以 reasoning_content 字段随 SSE 返回，
+      // 前端把它渲染成角色「心声」折叠区。若接口不支持可改回 disabled。
+      thinking: { type: "enabled" },
     }),
   });
 

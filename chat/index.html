@@ -96,6 +96,20 @@
         <span class="status"><i class="dot"></i>在线</span>
       </header>
 
+      <!-- 更新公告：仅当前版本首次访问时展示，可关闭 -->
+      <div class="announce" id="announce" hidden>
+        <div class="announce-body">
+          <strong>✨ 8 月 4 日更新公告</strong>
+          <ul>
+            <li>新增「心声」：回复前的内心独白会折叠在气泡下方，点开就能看到</li>
+            <li>回复改为逐字显示，更像真人在打字</li>
+            <li>修复：正文不输出、省略号占位、气泡被撑大等问题</li>
+          </ul>
+          <p class="announce-tip">💡 建议点击左侧「＋ 新建」开启新对话，体验最佳效果喵~</p>
+        </div>
+        <button class="announce-close" id="announceClose" title="关闭">✕</button>
+      </div>
+
       <div class="messages" id="messages">
         <div class="msg msg-ai">
           <img class="avatar ai-avatar" src="assets/ai-avatar.png" alt="AI">
@@ -111,6 +125,6 @@
 
   </div>
 
-<script src="js/app.js?v=8"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>

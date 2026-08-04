@@ -291,6 +291,46 @@ details summary::before { content: "▾ "; color: var(--pink-deep); }
 .messages::-webkit-scrollbar { width: 6px; }
 .messages::-webkit-scrollbar-thumb { background: rgba(255,143,179,0.35); border-radius: 6px; }
 
+/* ---------- 更新公告条 ---------- */
+.announce {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 16px 0;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(255,214,240,0.65), rgba(224,196,255,0.6));
+  border: 1.5px solid rgba(255,255,255,0.8);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(150,90,180,0.18);
+  color: #4a2a6b;
+  font-size: 13px;
+  line-height: 1.6;
+  animation: msgIn 0.35s ease both;
+}
+.announce[hidden] { display: none; }
+.announce-body { flex: 1; min-width: 0; }
+.announce-body strong { font-size: 13.5px; letter-spacing: 0.5px; }
+.announce-body ul { margin: 6px 0 0; padding-left: 18px; }
+.announce-body li { margin: 2px 0; }
+.announce-tip { margin: 8px 0 0; font-weight: 600; color: rgba(74,42,107,0.8); }
+.announce-close {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  border: none; border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  color: #4a2a6b;
+  font-size: 13px;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: background 0.2s;
+}
+.announce-close:hover { background: rgba(255,255,255,0.85); }
+@media (max-width: 720px) {
+  .announce { margin: 8px 10px 0; font-size: 12px; }
+}
+
 .msg { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; animation: msgIn 0.35s ease both; }
 @keyframes msgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 

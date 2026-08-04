@@ -6,6 +6,22 @@
 
 "use strict";
 
+/* ---------- 更新公告：仅当前版本首次访问时展示 ---------- */
+(function () {
+  const ANN_VER = "announce-v8";            // 公告版本标识，下次更新公告时改这里
+  const box = document.getElementById("announce");
+  if (!box) return;
+  let seen = false;
+  try { seen = localStorage.getItem("announce_seen") === ANN_VER; } catch (e) {}
+  if (seen) return;
+  box.hidden = false;
+  const close = document.getElementById("announceClose");
+  if (close) close.addEventListener("click", function () {
+    box.hidden = true;
+    try { localStorage.setItem("announce_seen", ANN_VER); } catch (e) {}
+  });
+})();
+
 /* ---------- 可配置项 ---------- */
 const CONFIG = {
   model: "deepseek-v4-flash",
